@@ -1,0 +1,22 @@
+services:
+  backend:
+    build:
+      context: backend
+      dockerfile: docker/Dockerfile
+    ports:
+      - "8080:8080"
+
+  frontend:
+    build:
+      context: frontend
+      dockerfile: docker/Dockerfile
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend/src:/app/src
+      - ./frontend/index.html:/app/index.html
+    environment:
+      - NODE_ENV=development
+      - VITE_BACKEND_URL=http://backend:8080
+    depends_on:
+      - backend

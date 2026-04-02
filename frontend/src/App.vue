@@ -1,0 +1,66 @@
+<template>
+  <div class="app">
+    <SolarSystemView
+      ref="solarSystemView"
+      @bodies-loaded="bodies = $event"
+    />
+    <div class="hud-bottom">
+      <TimeControls />
+    </div>
+    <div class="hud-side">
+      <BodyList
+        :bodies="bodies"
+        :focused-id="focusedId"
+        @focus="onFocus"
+      />
+    </div>
+  </div>
+</template>
+
+<script setup>
+import { ref } from 'vue';
+import SolarSystemView from './features/solar-system/view/SolarSystemView.vue';
+import TimeControls from './features/ui/TimeControls.vue';
+import BodyList from './features/ui/BodyList.vue';
+
+const solarSystemView = ref(null);
+const bodies = ref([]);
+const focusedId = ref(null);
+
+function onFocus(id) {
+  focusedId.value = id;
+  solarSystemView.value?.focusBody(id);
+}
+</script>
+
+<style scoped>
+.app {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.hud-bottom {
+  position: absolute;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.hud-side {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+}
+
+/* Mobile: body list moves to the bottom above the clock */
+@media (max-width: 640px) {
+  .hud-side {
+    top: auto;
+    left: 0;
+    right: 0;
+    bottom: 52px;
+    padding: 0 12px;
+  }
+}
+</style>

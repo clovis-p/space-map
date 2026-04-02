@@ -1,0 +1,214 @@
+openapi: 3.1.0
+info:
+  title: SpaceMap API
+  version: 0.0.1
+
+servers:
+  - url: http://localhost:8080
+
+paths:
+  /api/planets:
+    get:
+      summary: List solar system bodies
+      description: >
+        Returns the Sun and the 8 planets with their visual properties and
+        mean Keplerian orbital elements at the J2000 epoch.
+        Clients can propagate positions to any time using these elements.
+      operationId: getPlanets
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Body"
+
+  /api/groups:
+    get:
+      summary: List satellite groups
+      description: Returns the supported CelesTrak satellite groups with their display names.
+      operationId: getGroups
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Group"
+
+  /api/satellites:
+    get:
+      summary: Get satellites for a group
+      description: >
+        Returns satellite orbital data sourced from CelesTrak OMM records,
+        normalised to the same shape as `/api/planets`. Results are cached for 30 minutes.
+      operationId: getSatellites
+      parameters:
+        - name: group
+          in: query
+          required: false
+          schema:
+            type: string
+            default: stations
+          description: >
+            Group identifier. See `/api/groups` for valid values.
+          example: starlink
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Satellite"
+        "400":
+          description: Unknown group identifier
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetail"
+        "404":
+          description: CelesTrak returned no data for the group
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetail"
+        "502":
+          description: Upstream CelesTrak request failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetail"
+
+components:
+  schemas:
+
+    Body:
+      type: object
+      required: [id, name, radiusKm, color]
+      properties:
+        id:
+          type: string
+          example: earth
+        name:
+          type: string
+          example: Earth
+        radiusKm:
+          type: number
+          format: double
+          description: Physical radius in kilometres
+          example: 6371.0
+        color:
+          type: integer
+          description: RGB colour as a 24-bit integer (e.g. 0x4fc3f7 = 5292023)
+          example: 5292023
+        elements:
+          nullable: true
+          description: >
+            Mean Keplerian orbital elements at J2000 epoch.
+            Null for the Sun, which is fixed at the origin.
+          allOf:
+            - $ref: "#/components/schemas/OrbitalElements"
+
+    OrbitalElements:
+      type: object
+      required:
+        - semiMajorAxis
+        - eccentricity
+        - inclination
+        - longitudeOfAscendingNode
+        - argumentOfPeriapsis
+        - meanAnomalyAtEpoch
+        - meanMotion
+      properties:
+        semiMajorAxis:
+          type: number
+          format: double
+          description: Semi-major axis in AU
+          example: 1.00000261
+        eccentricity:
+          type: number
+          format: double
+          example: 0.01671123
+        inclination:
+          type: number
+          format: double
+          description: Inclination in degrees
+          example: -0.00001531
+        longitudeOfAscendingNode:
+          type: number
+          format: double
+          description: Longitude of ascending node (Ω) in degrees
+          example: 0.0
+        argumentOfPeriapsis:
+          type: number
+          format: double
+          description: Argument of periapsis (ω) in degrees
+          example: 102.93768193
+        meanAnomalyAtEpoch:
+          type: number
+          format: double
+          description: Mean anomaly at epoch (M₀) in degrees
+          example: 100.46457166
+        meanMotion:
+          type: number
+          format: double
+          description: Mean motion (n) in degrees/day
+          example: 0.98560028
+        epoch:
+          type: string
+          format: date-time
+          nullable: true
+          description: >
+            Reference epoch for meanAnomalyAtEpoch. Absent for planets (implying J2000);
+            present for satellites (the TLE epoch).
+          example: "2024-01-15T12:00:00.000000"
+
+    Satellite:
+      type: object
+      required: [id, name, centralBodyId, elements]
+      properties:
+        id:
+          type: string
+          description: NORAD catalog number
+          example: "25544"
+        name:
+          type: string
+          example: ISS (ZARYA)
+        centralBodyId:
+          type: string
+          description: ID of the body this orbit is relative to
+          example: earth
+        elements:
+          $ref: "#/components/schemas/OrbitalElements"
+
+    Group:
+      type: object
+      required: [id, name]
+      properties:
+        id:
+          type: string
+          description: Identifier to pass as the `group` query parameter
+          example: starlink
+        name:
+          type: string
+          description: Human-readable display name
+          example: Starlink
+
+    ProblemDetail:
+      type: object
+      properties:
+        status:
+          type: integer
+          example: 400
+        error:
+          type: string
+          example: Bad Request
+        message:
+          type: string
+          example: "Unknown group 'foo'. See /api/groups for valid options."
