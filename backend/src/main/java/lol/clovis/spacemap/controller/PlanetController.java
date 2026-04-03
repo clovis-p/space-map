@@ -1,9 +1,9 @@
 package lol.clovis.spacemap.controller;
 
+import lol.clovis.spacemap.service.HorizonsService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import lol.clovis.spacemap.service.PlanetService;
 
 import java.util.List;
 
@@ -11,14 +11,14 @@ import java.util.List;
 @RequestMapping("/api")
 public class PlanetController {
 
-    private final PlanetService planetService;
+    private final HorizonsService horizonsService;
 
-    public PlanetController(PlanetService planetService) {
-        this.planetService = planetService;
+    public PlanetController(HorizonsService horizonsService) {
+        this.horizonsService = horizonsService;
     }
 
     @GetMapping("/planets")
-    public List<PlanetService.Body> getPlanets() {
-        return planetService.getAllBodies();
+    public List<HorizonsService.Body> getPlanets() {
+        return horizonsService.getAllBodies();
     }
 }

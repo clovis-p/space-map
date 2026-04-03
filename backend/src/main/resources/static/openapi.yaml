@@ -110,10 +110,20 @@ components:
         elements:
           nullable: true
           description: >
-            Mean Keplerian orbital elements at J2000 epoch.
+            Keplerian orbital elements. Live osculating elements when sourced from
+            JPL Horizons, J2000 mean elements when falling back to hardcoded data.
             Null for the Sun, which is fixed at the origin.
           allOf:
             - $ref: "#/components/schemas/OrbitalElements"
+        source:
+          type: string
+          nullable: true
+          description: >
+            Where the orbital elements were sourced from.
+            "horizons" = live osculating elements from JPL Horizons.
+            "fallback" = hardcoded J2000 mean elements used when live fetch fails.
+            Null for the Sun (no elements).
+          example: horizons
 
     OrbitalElements:
       type: object
