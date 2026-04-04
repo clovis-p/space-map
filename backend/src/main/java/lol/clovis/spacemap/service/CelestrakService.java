@@ -62,10 +62,10 @@ public class CelestrakService {
     private static final double MU_EARTH = 398600.4418; // km³/s²
     private static final double AU_IN_KM = 149597870.7;
 
-    private static SatelliteData toSatelliteData(OmmRecord r) {
+    private static SpacecraftData toSpacecraftData(OmmRecord r) {
         double n = r.meanMotion() * 2 * Math.PI / 86400; // rad/s
         double semiMajorAxisAu = Math.pow(MU_EARTH / (n * n), 1.0 / 3.0) / AU_IN_KM;
-        SatelliteData.OrbitalElements elements = new SatelliteData.OrbitalElements(
+        SpacecraftData.OrbitalElements elements = new SpacecraftData.OrbitalElements(
                 semiMajorAxisAu,
                 r.eccentricity(),
                 r.inclination(),
@@ -75,11 +75,11 @@ public class CelestrakService {
                 r.meanMotion() * 360,
                 r.epoch()
         );
-        return new SatelliteData(String.valueOf(r.noradCatId()), r.objectName(), "earth", elements);
+        return new SpacecraftData(String.valueOf(r.noradCatId()), r.objectName(), "earth", elements);
     }
 
     @Cacheable(value = "tle", key = "#group")
-    public List<SatelliteData> fetchGroup(String group) {
+    public List<SpacecraftData> fetchGroup(String group) {
         if (!GROUPS.containsKey(group)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                     "Unknown group '%s'. See /api/groups for valid options.".formatted(group));
@@ -100,9 +100,9 @@ public class CelestrakService {
                         "CelesTrak returned no data for group '%s'.".formatted(group));
             }
 
-            List<SatelliteData> satellites = records.stream().map(CelestrakService::toSatelliteData).toList();
-            log.info("Cached {} satellites for group '{}'", satellites.size(), group);
-            return satellites;
+            List<SpacecraftData> spacecraft = records.stream().map(CelestrakService::toSpacecraftData).toList();
+            log.info("Cached {} spacecraft for group '{}'", spacecraft.size(), group);
+            return spacecraft;
 
         } catch (ResponseStatusException e) {
             throw e;
@@ -112,7 +112,7 @@ public class CelestrakService {
         }
     }
 
-    public record SatelliteData(
+    public record SpacecraftData(
             String id,
             String name,
             String centralBodyId,

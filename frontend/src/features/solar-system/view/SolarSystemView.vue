@@ -79,9 +79,9 @@ onUnmounted(() => {
 
 defineExpose({
   focusBody: (id) => controller.value?.focusBody(id),
-  loadSatellites: (data) => controller.value?.loadSatellites(data),
-  focusSatellite: (id) => controller.value?.focusSatellite(id),
-  clearSatellites: () => controller.value?.clearSatellites(),
+  loadSpacecraft: (data) => controller.value?.loadSpacecraft(data),
+  focusSpacecraft: (id) => controller.value?.focusSpacecraft(id),
+  clearSpacecraft: () => controller.value?.clearSpacecraft(),
 });
 </script>
 

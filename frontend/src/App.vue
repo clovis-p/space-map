@@ -13,9 +13,9 @@
         :focused-id="focusedId"
         :groups="groups"
         @focus="onFocus"
-        @satellites-loaded="onSatellitesLoaded"
-        @focus-satellite="onFocusSatellite"
-        @satellites-cleared="onSatellitesCleared"
+        @spacecraft-loaded="onSpacecraftLoaded"
+        @focus-spacecraft="onFocusSpacecraft"
+        @spacecraft-cleared="onSpacecraftCleared"
       />
     </div>
   </div>
@@ -42,16 +42,16 @@ function onFocus(id) {
   solarSystemView.value?.focusBody(id);
 }
 
-function onSatellitesLoaded(data) {
-  solarSystemView.value?.loadSatellites(data);
+function onSpacecraftLoaded(data) {
+  solarSystemView.value?.loadSpacecraft(data);
 }
 
-function onFocusSatellite(id) {
-  solarSystemView.value?.focusSatellite(id);
+function onFocusSpacecraft(id) {
+  solarSystemView.value?.focusSpacecraft(id);
 }
 
-function onSatellitesCleared() {
-  solarSystemView.value?.clearSatellites();
+function onSpacecraftCleared() {
+  solarSystemView.value?.clearSpacecraft();
 }
 </script>
 

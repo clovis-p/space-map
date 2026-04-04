@@ -14,7 +14,7 @@ export class OrbitRenderer {
   constructor(scene) {
     this.scene = scene;
     this._lines = [];
-    this._satelliteOrbitLine = null;
+    this._spacecraftOrbitLine = null;
   }
 
   /**
@@ -30,15 +30,15 @@ export class OrbitRenderer {
   }
 
   /**
-   * Draw the orbit ellipse for a satellite, offset by its central body's current position.
-   * Only one satellite orbit is shown at a time; calling this replaces any previous one.
-   * @param {import('../../../models/Satellite.js').Satellite} satellite
+   * Draw the orbit ellipse for a spacecraft, offset by its central body's current position.
+   * Only one spacecraft orbit is shown at a time; calling this replaces any previous one.
+   * @param {import('../../../models/Spacecraft.js').Spacecraft} spacecraft
    * @param {{ x: number, y: number, z: number }} centralBodyEclipticPos Heliocentric ecliptic position in AU
    */
-  addSatelliteOrbit(satellite, centralBodyEclipticPos) {
-    this.clearSatelliteOrbit();
-    if (!satellite.elements) return;
-    const line = this._buildOrbitLine(satellite.elements, {
+  addSpacecraftOrbit(spacecraft, centralBodyEclipticPos) {
+    this.clearSpacecraftOrbit();
+    if (!spacecraft.elements) return;
+    const line = this._buildOrbitLine(spacecraft.elements, {
       tRef: Date.now(),
       color: 0xffffff,
       opacity: 0.6,
@@ -46,18 +46,18 @@ export class OrbitRenderer {
     });
     line.frustumCulled = false;
     this.scene.add(line);
-    this._satelliteOrbitLine = line;
+    this._spacecraftOrbitLine = line;
   }
 
   /**
-   * Remove the active satellite orbit line from the scene.
+   * Remove the active spacecraft orbit line from the scene.
    */
-  clearSatelliteOrbit() {
-    if (!this._satelliteOrbitLine) return;
-    this._satelliteOrbitLine.geometry.dispose();
-    this._satelliteOrbitLine.material.dispose();
-    this.scene.remove(this._satelliteOrbitLine);
-    this._satelliteOrbitLine = null;
+  clearSpacecraftOrbit() {
+    if (!this._spacecraftOrbitLine) return;
+    this._spacecraftOrbitLine.geometry.dispose();
+    this._spacecraftOrbitLine.material.dispose();
+    this.scene.remove(this._spacecraftOrbitLine);
+    this._spacecraftOrbitLine = null;
   }
 
   /**
@@ -93,6 +93,6 @@ export class OrbitRenderer {
       this.scene.remove(line);
     }
     this._lines = [];
-    this.clearSatelliteOrbit();
+    this.clearSpacecraftOrbit();
   }
 }

@@ -30,10 +30,10 @@ export function fetchGroups() {
 }
 
 /**
- * Returns satellites for a group.
+ * Returns spacecraft for a group.
  * @param {string} group Group identifier from fetchGroups()
  * @returns {Promise<Array>}
  */
-export function fetchSatellites(group = 'stations') {
-  return get(`/api/satellites?group=${encodeURIComponent(group)}`);
+export function fetchSpacecraft(group = 'stations') {
+  return get(`/api/spacecraft?group=${encodeURIComponent(group)}`);
 }

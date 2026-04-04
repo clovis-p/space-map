@@ -2,7 +2,7 @@ import { SceneRenderer } from '../renderer/SceneRenderer.js';
 import { OrbitRenderer } from '../renderer/OrbitRenderer.js';
 import { ObjectRenderer } from '../renderer/ObjectRenderer.js';
 import { CelestialBody } from '../../../models/CelestialBody.js';
-import { Satellite } from '../../../models/Satellite.js';
+import { Spacecraft } from '../../../models/Spacecraft.js';
 import { fetchBodies } from '../../../services/api.js';
 
 /**
@@ -26,13 +26,13 @@ export class SolarSystemController {
     this._objectRenderer = new ObjectRenderer(this._sceneRenderer.scene);
     /** @type {Map<string, import('../../../models/SpaceObject.js').SpaceObject>} */
     this._bodies = new Map();
-    /** @type {Map<string, Satellite>} */
-    this._satellites = new Map();
+    /** @type {Map<string, Spacecraft>} */
+    this._spacecraft = new Map();
     this._animFrameId = null;
     // Time override: null means use real-time (Date.now())
     this._timeOverride = null;
     this._focusedBodyId = null;
-    this._focusedSatelliteId = null;
+    this._focusedSpacecraftId = null;
 
     this._load();
   }
@@ -56,7 +56,7 @@ export class SolarSystemController {
       this._animFrameId = requestAnimationFrame(tick);
       const t = this._timeOverride ?? Date.now();
       this._objectRenderer.updatePositions(this._bodies, t);
-      this._objectRenderer.updateSatellitePoints(this._bodies, this._satellites, t);
+      this._objectRenderer.updateSpacecraftPoints(this._bodies, this._spacecraft, t);
       this._trackFocus(t);
       this._sceneRenderer.render();
       this._callbacks.onAfterRender?.();
@@ -65,8 +65,8 @@ export class SolarSystemController {
   }
 
   _trackFocus(t) {
-    if (this._focusedSatelliteId) {
-      const sat = this._satellites.get(this._focusedSatelliteId);
+    if (this._focusedSpacecraftId) {
+      const sat = this._spacecraft.get(this._focusedSpacecraftId);
       if (!sat) return;
       const earth = this._bodies.get(sat.centralBodyId);
       if (!earth) return;
@@ -97,59 +97,59 @@ export class SolarSystemController {
    * @param {string} id
    */
   focusBody(id) {
-    this._focusedSatelliteId = null;
+    this._focusedSpacecraftId = null;
     this._focusedBodyId = id;
   }
 
   /**
-   * Load a satellite group into the scene as a point cloud.
-   * @param {Array} rawArray Raw satellite data from the API
+   * Load a spacecraft group into the scene as a point cloud.
+   * @param {Array} rawArray Raw spacecraft data from the API
    */
-  loadSatellites(rawArray) {
-    this._objectRenderer.clearSatellitePoints();
-    this._orbitRenderer.clearSatelliteOrbit();
-    this._satellites.clear();
-    this._focusedSatelliteId = null;
+  loadSpacecraft(rawArray) {
+    this._objectRenderer.clearSpacecraftPoints();
+    this._orbitRenderer.clearSpacecraftOrbit();
+    this._spacecraft.clear();
+    this._focusedSpacecraftId = null;
     for (const data of rawArray) {
-      const sat = new Satellite(data);
-      this._satellites.set(sat.id, sat);
+      const sat = new Spacecraft(data);
+      this._spacecraft.set(sat.id, sat);
     }
-    this._objectRenderer.setSatellitePoints(this._satellites);
+    this._objectRenderer.setSpacecraftPoints(this._spacecraft);
   }
 
   /**
-   * Remove all satellite visuals from the scene.
+   * Remove all spacecraft visuals from the scene.
    */
-  clearSatellites() {
-    this._objectRenderer.clearSatellitePoints();
-    this._orbitRenderer.clearSatelliteOrbit();
-    this._satellites.clear();
-    this._focusedSatelliteId = null;
+  clearSpacecraft() {
+    this._objectRenderer.clearSpacecraftPoints();
+    this._orbitRenderer.clearSpacecraftOrbit();
+    this._spacecraft.clear();
+    this._focusedSpacecraftId = null;
   }
 
   /**
-   * Focus the camera on a satellite and draw its orbit.
-   * @param {string} id NORAD catalog number
+   * Focus the camera on a spacecraft and draw its orbit.
+   * @param {string} id NORAD catalog number or Horizons ID
    */
-  focusSatellite(id) {
-    const sat = this._satellites.get(id);
+  focusSpacecraft(id) {
+    const sat = this._spacecraft.get(id);
     if (!sat) return;
     const earth = this._bodies.get(sat.centralBodyId);
     if (!earth) return;
 
-    this._orbitRenderer.clearSatelliteOrbit();
+    this._orbitRenderer.clearSpacecraftOrbit();
 
     const t = this._timeOverride ?? Date.now();
     const earthPos = earth.getPosition(t);
-    this._orbitRenderer.addSatelliteOrbit(sat, earthPos);
+    this._orbitRenderer.addSpacecraftOrbit(sat, earthPos);
 
     this._focusedBodyId = null;
-    this._focusedSatelliteId = id;
+    this._focusedSpacecraftId = id;
     this._sceneRenderer.clearFocusTarget();
-    this._zoomToSatellite(earthPos, sat.elements.semiMajorAxis * 3);
+    this._zoomToSpacecraft(earthPos, sat.elements.semiMajorAxis * 3);
   }
 
-  _zoomToSatellite(earthEclipticPos, dist) {
+  _zoomToSpacecraft(earthEclipticPos, dist) {
     // Convert Earth ecliptic position to three.js y-up coords
     const ex = earthEclipticPos.x;
     const ey = earthEclipticPos.z;

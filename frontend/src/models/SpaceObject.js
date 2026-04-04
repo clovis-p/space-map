@@ -7,7 +7,7 @@ export class SpaceObject {
    * @param {object} params
    * @param {string} params.id
    * @param {string} params.name
-   * @param {'celestial'|'satellite'} params.type
+   * @param {'celestial'|'spacecraft'} params.type
    * @param {'mesh'|'icon'} params.displayMode
    */
   constructor({ id, name, type, displayMode = 'icon' }) {

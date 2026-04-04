@@ -2,7 +2,7 @@
   <nav class="body-list">
     <div class="tabs">
       <button class="tab-btn" :class="{ active: activeTab === 'planets' }" @click="onPlanetsTab">Planets</button>
-      <button class="tab-btn" :class="{ active: activeTab === 'satellites' }" @click="onSatellitesTab">Satellites</button>
+      <button class="tab-btn" :class="{ active: activeTab === 'spacecraft' }" @click="onSpacecraftTab">Spacecraft</button>
     </div>
 
     <template v-if="activeTab === 'planets'">
@@ -19,17 +19,17 @@
     </template>
 
     <template v-else>
-      <select class="group-select" v-model="selectedGroupId" @change="fetchSatellites">
+      <select class="group-select" v-model="selectedGroupId" @change="fetchSpacecraft">
         <option v-for="g in groups" :key="g.id" :value="g.id">{{ g.name }}</option>
       </select>
-      <div v-if="loadingSatellites" class="loading">Loading…</div>
+      <div v-if="loadingSpacecraft" class="loading">Loading…</div>
       <button
         v-else
-        v-for="sat in satellites"
+        v-for="sat in spacecraft"
         :key="sat.id"
         class="body-item"
-        :class="{ active: focusedSatelliteId === sat.id }"
-        @click="onSatelliteClick(sat)"
+        :class="{ active: focusedSpacecraftId === sat.id }"
+        @click="onSpacecraftClick(sat)"
       >
         <span class="dot" :style="{ background: colorToCss(selectedGroup?.color) }" />
         <span class="name">{{ sat.name }}</span>
@@ -40,7 +40,7 @@
 
 <script setup>
 import { ref, computed } from 'vue';
-import { fetchSatellites as apiFetchSatellites } from '../../services/api.js';
+import { fetchSpacecraft as apiFetchSpacecraft } from '../../services/api.js';
 
 const props = defineProps({
   bodies: { type: Array, default: () => [] },
@@ -48,13 +48,13 @@ const props = defineProps({
   groups: { type: Array, default: () => [] },
 });
 
-const emit = defineEmits(['focus', 'satellites-loaded', 'focus-satellite', 'satellites-cleared']);
+const emit = defineEmits(['focus', 'spacecraft-loaded', 'focus-spacecraft', 'spacecraft-cleared']);
 
 const activeTab = ref('planets');
 const selectedGroupId = ref('stations');
-const satellites = ref([]);
-const loadingSatellites = ref(false);
-const focusedSatelliteId = ref(null);
+const spacecraft = ref([]);
+const loadingSpacecraft = ref(false);
+const focusedSpacecraftId = ref(null);
 
 const selectedGroup = computed(() => props.groups.find(g => g.id === selectedGroupId.value));
 
@@ -63,29 +63,29 @@ function colorToCss(hex) {
   return `#${hex.toString(16).padStart(6, '0')}`;
 }
 
-async function fetchSatellites() {
-  emit('satellites-cleared');
-  focusedSatelliteId.value = null;
-  loadingSatellites.value = true;
-  satellites.value = await apiFetchSatellites(selectedGroupId.value);
-  loadingSatellites.value = false;
-  emit('satellites-loaded', satellites.value);
+async function fetchSpacecraft() {
+  emit('spacecraft-cleared');
+  focusedSpacecraftId.value = null;
+  loadingSpacecraft.value = true;
+  spacecraft.value = await apiFetchSpacecraft(selectedGroupId.value);
+  loadingSpacecraft.value = false;
+  emit('spacecraft-loaded', spacecraft.value);
 }
 
 function onPlanetsTab() {
   activeTab.value = 'planets';
-  focusedSatelliteId.value = null;
-  emit('satellites-cleared');
+  focusedSpacecraftId.value = null;
+  emit('spacecraft-cleared');
 }
 
-function onSatellitesTab() {
-  activeTab.value = 'satellites';
-  if (satellites.value.length === 0) fetchSatellites();
+function onSpacecraftTab() {
+  activeTab.value = 'spacecraft';
+  if (spacecraft.value.length === 0) fetchSpacecraft();
 }
 
-function onSatelliteClick(sat) {
-  focusedSatelliteId.value = sat.id;
-  emit('focus-satellite', sat.id);
+function onSpacecraftClick(sat) {
+  focusedSpacecraftId.value = sat.id;
+  emit('focus-spacecraft', sat.id);
 }
 </script>
 

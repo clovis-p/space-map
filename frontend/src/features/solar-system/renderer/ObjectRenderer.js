@@ -13,8 +13,8 @@ export class ObjectRenderer {
     this.scene = scene;
     // Map from body.id to THREE.Object3D
     this._objects = new Map();
-    this._satellitePoints = null;
-    this._satelliteIds = [];
+    this._spacecraftPoints = null;
+    this._spacecraftIds = [];
   }
 
   /**
@@ -61,16 +61,16 @@ export class ObjectRenderer {
   }
 
   /**
-   * Create a point cloud for all satellites in the given map.
+   * Create a point cloud for all spacecraft in the given map.
    * Points use a fixed pixel size so they stay visible at any zoom level.
-   * @param {Map<string, import('../../../models/Satellite.js').Satellite>} satellitesMap
+   * @param {Map<string, import('../../../models/Spacecraft.js').Spacecraft>} spacecraftMap
    */
-  setSatellitePoints(satellitesMap) {
-    this.clearSatellitePoints();
-    const count = satellitesMap.size;
+  setSpacecraftPoints(spacecraftMap) {
+    this.clearSpacecraftPoints();
+    const count = spacecraftMap.size;
     if (count === 0) return;
 
-    this._satelliteIds = [...satellitesMap.keys()];
+    this._spacecraftIds = [...spacecraftMap.keys()];
     const positions = new Float32Array(count * 3);
     const geometry = new THREE.BufferGeometry();
     geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
@@ -79,22 +79,22 @@ export class ObjectRenderer {
       size: 2,
       sizeAttenuation: false,
     });
-    this._satellitePoints = new THREE.Points(geometry, material);
-    this._satellitePoints.frustumCulled = false;
-    this.scene.add(this._satellitePoints);
+    this._spacecraftPoints = new THREE.Points(geometry, material);
+    this._spacecraftPoints.frustumCulled = false;
+    this.scene.add(this._spacecraftPoints);
   }
 
   /**
-   * Update satellite point positions every frame.
+   * Update spacecraft point positions every frame.
    * @param {Map<string, import('../../../models/SpaceObject.js').SpaceObject>} bodies Planet map, used to look up central bodies
-   * @param {Map<string, import('../../../models/Satellite.js').Satellite>} satellites
+   * @param {Map<string, import('../../../models/Spacecraft.js').Spacecraft>} spacecraft
    * @param {number} t Unix timestamp in ms
    */
-  updateSatellitePoints(bodies, satellites, t) {
-    if (!this._satellitePoints) return;
-    const positions = this._satellitePoints.geometry.attributes.position.array;
-    for (let i = 0; i < this._satelliteIds.length; i++) {
-      const sat = satellites.get(this._satelliteIds[i]);
+  updateSpacecraftPoints(bodies, spacecraft, t) {
+    if (!this._spacecraftPoints) return;
+    const positions = this._spacecraftPoints.geometry.attributes.position.array;
+    for (let i = 0; i < this._spacecraftIds.length; i++) {
+      const sat = spacecraft.get(this._spacecraftIds[i]);
       const earth = sat ? bodies.get(sat.centralBodyId) : null;
       if (!sat || !earth) {
         positions[i * 3] = positions[i * 3 + 1] = positions[i * 3 + 2] = 0;
@@ -107,19 +107,19 @@ export class ObjectRenderer {
       positions[i * 3 + 1] = earthP.z + satRel.z;
       positions[i * 3 + 2] = earthP.y + satRel.y;
     }
-    this._satellitePoints.geometry.attributes.position.needsUpdate = true;
+    this._spacecraftPoints.geometry.attributes.position.needsUpdate = true;
   }
 
   /**
-   * Remove the satellite point cloud from the scene and free its resources.
+   * Remove the spacecraft point cloud from the scene and free its resources.
    */
-  clearSatellitePoints() {
-    if (!this._satellitePoints) return;
-    this._satellitePoints.geometry.dispose();
-    this._satellitePoints.material.dispose();
-    this.scene.remove(this._satellitePoints);
-    this._satellitePoints = null;
-    this._satelliteIds = [];
+  clearSpacecraftPoints() {
+    if (!this._spacecraftPoints) return;
+    this._spacecraftPoints.geometry.dispose();
+    this._spacecraftPoints.material.dispose();
+    this.scene.remove(this._spacecraftPoints);
+    this._spacecraftPoints = null;
+    this._spacecraftIds = [];
   }
 
   dispose() {
@@ -129,6 +129,6 @@ export class ObjectRenderer {
       this.scene.remove(obj);
     }
     this._objects.clear();
-    this.clearSatellitePoints();
+    this.clearSpacecraftPoints();
   }
 }

@@ -40,13 +40,13 @@ paths:
                 items:
                   $ref: "#/components/schemas/Group"
 
-  /api/satellites:
+  /api/spacecraft:
     get:
-      summary: Get satellites for a group
+      summary: Get spacecraft for a group
       description: >
-        Returns satellite orbital data sourced from CelesTrak OMM records,
+        Returns spacecraft orbital data sourced from CelesTrak OMM records or JPL Horizons,
         normalised to the same shape as `/api/planets`. Results are cached for 30 minutes.
-      operationId: getSatellites
+      operationId: getSpacecraft
       parameters:
         - name: group
           in: query
@@ -65,7 +65,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/Satellite"
+                  $ref: "#/components/schemas/Spacecraft"
         "400":
           description: Unknown group identifier
           content:
@@ -179,13 +179,13 @@ components:
             present for satellites (the TLE epoch).
           example: "2024-01-15T12:00:00.000000"
 
-    Satellite:
+    Spacecraft:
       type: object
       required: [id, name, centralBodyId, elements]
       properties:
         id:
           type: string
-          description: NORAD catalog number
+          description: NORAD catalog number or Horizons ID
           example: "25544"
         name:
           type: string

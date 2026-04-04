@@ -11,11 +11,11 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api")
-public class SatelliteController {
+public class SpacecraftController {
 
     private final CelestrakService celestrakService;
 
-    public SatelliteController(CelestrakService celestrakService) {
+    public SpacecraftController(CelestrakService celestrakService) {
         this.celestrakService = celestrakService;
     }
 
@@ -23,15 +23,15 @@ public class SatelliteController {
      * Returns raw OMM JSON from CelesTrak for the requested group.
      * Results are cached for 30 minutes.
      *
-     * Example: GET /api/satellites?group=stations
+     * Example: GET /api/spacecraft?group=stations
      */
-    @GetMapping("/satellites")
-    public List<CelestrakService.SatelliteData> getSatellites(@RequestParam(defaultValue = "stations") String group) {
+    @GetMapping("/spacecraft")
+    public List<CelestrakService.SpacecraftData> getSpacecraft(@RequestParam(defaultValue = "stations") String group) {
         return celestrakService.fetchGroup(group);
     }
 
     /**
-     * Returns the list of supported satellite groups with their display names.
+     * Returns the list of supported spacecraft groups with their display names.
      *
      * Example: GET /api/groups
      */
