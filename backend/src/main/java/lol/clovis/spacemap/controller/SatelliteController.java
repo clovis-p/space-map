@@ -38,10 +38,10 @@ public class SatelliteController {
     @GetMapping("/groups")
     public List<GroupDto> getGroups() {
         return CelestrakService.GROUPS.entrySet().stream()
-                .map(e -> new GroupDto(e.getKey(), e.getValue()))
+                .map(e -> new GroupDto(e.getKey(), e.getValue().name(), e.getValue().color()))
                 .sorted(Comparator.comparing(GroupDto::name))
                 .toList();
     }
 
-    public record GroupDto(String id, String name) {}
+    public record GroupDto(String id, String name, int color) {}
 }

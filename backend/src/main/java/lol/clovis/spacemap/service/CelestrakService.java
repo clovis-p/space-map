@@ -25,25 +25,27 @@ public class CelestrakService {
     private static final String CELESTRAK_URL =
             "https://celestrak.org/NORAD/elements/gp.php?GROUP={group}&FORMAT=json";
 
+    public record GroupInfo(String name, int color) {}
+
     // Allowlist: protects against SSRF if the group param is ever used in a URL
-    public static final Map<String, String> GROUPS = Map.ofEntries(
-            Map.entry("stations", "Space Stations"),
-            Map.entry("visual", "Brightest / Visible"),
-            Map.entry("active", "All Active"),
-            Map.entry("gps-ops", "GPS"),
-            Map.entry("starlink", "Starlink"),
-            Map.entry("weather", "Weather"),
-            Map.entry("noaa", "NOAA"),
-            Map.entry("goes", "GOES"),
-            Map.entry("amateur", "Amateur Radio"),
-            Map.entry("science", "Science"),
-            Map.entry("iridium-next", "Iridium NEXT"),
-            Map.entry("oneweb", "OneWeb"),
-            Map.entry("galileo", "Galileo"),
-            Map.entry("beidou", "BeiDou"),
-            Map.entry("glonass", "GLONASS"),
-            Map.entry("military", "Military"),
-            Map.entry("cubesats", "CubeSats")
+    public static final Map<String, GroupInfo> GROUPS = Map.ofEntries(
+            Map.entry("stations", new GroupInfo("Space Stations", 0x4fc3f7)),
+            Map.entry("visual", new GroupInfo("Brightest / Visible", 0xffffff)),
+            Map.entry("active", new GroupInfo("All Active", 0x80cbc4)),
+            Map.entry("gps-ops", new GroupInfo("GPS", 0x66bb6a)),
+            Map.entry("starlink", new GroupInfo("Starlink", 0x9575cd)),
+            Map.entry("weather", new GroupInfo("Weather", 0xffca28)),
+            Map.entry("noaa", new GroupInfo("NOAA", 0x42a5f5)),
+            Map.entry("goes", new GroupInfo("GOES", 0x26c6da)),
+            Map.entry("amateur", new GroupInfo("Amateur Radio", 0xef5350)),
+            Map.entry("science", new GroupInfo("Science", 0xab47bc)),
+            Map.entry("iridium-next", new GroupInfo("Iridium NEXT", 0xff7043)),
+            Map.entry("oneweb", new GroupInfo("OneWeb", 0x26a69a)),
+            Map.entry("galileo", new GroupInfo("Galileo", 0xffa726)),
+            Map.entry("beidou", new GroupInfo("BeiDou", 0xec407a)),
+            Map.entry("glonass", new GroupInfo("GLONASS", 0xff5722)),
+            Map.entry("military", new GroupInfo("Military", 0x78909c)),
+            Map.entry("cubesats", new GroupInfo("CubeSats", 0xd4e157))
     );
 
     private final RestClient restClient;

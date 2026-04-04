@@ -11,6 +11,7 @@
       <BodyList
         :bodies="bodies"
         :focused-id="focusedId"
+        :groups="groups"
         @focus="onFocus"
       />
     </div>
@@ -18,7 +19,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 import SolarSystemView from './features/solar-system/view/SolarSystemView.vue';
 import TimeControls from './features/ui/TimeControls.vue';
 import BodyList from './features/ui/BodyList.vue';
@@ -26,6 +27,12 @@ import BodyList from './features/ui/BodyList.vue';
 const solarSystemView = ref(null);
 const bodies = ref([]);
 const focusedId = ref(null);
+const groups = ref([]);
+
+onMounted(async () => {
+  const res = await fetch('/api/groups');
+  groups.value = await res.json();
+});
 
 function onFocus(id) {
   focusedId.value = id;
