@@ -29,8 +29,14 @@ public class CacheConfig {
                         .maximumSize(1)
                         .recordStats()
                         .build());
+        CaffeineCache spacecraftCache = new CaffeineCache("spacecraft",
+                Caffeine.newBuilder()
+                        .expireAfterWrite(6, TimeUnit.HOURS)
+                        .maximumSize(1)
+                        .recordStats()
+                        .build());
         SimpleCacheManager manager = new SimpleCacheManager();
-        manager.setCaches(List.of(tleCache, planetCache));
+        manager.setCaches(List.of(tleCache, planetCache, spacecraftCache));
         return manager;
     }
 }

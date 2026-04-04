@@ -33,6 +33,7 @@ export class CelestialBody extends SpaceObject {
    * @returns {{ x: number, y: number, z: number }} Position in AU
    */
   getPosition(t) {
+    if (!this.elements) return { x: 0, y: 0, z: 0 };
     return keplerianToPosition(this.elements, t);
   }
 }

@@ -27,6 +27,22 @@ function solveKepler(M, e) {
 }
 
 /**
+ * Solve hyperbolic Kepler's equation M = e*sinh(H) - H for H using Newton-Raphson iteration.
+ * @param {number} M Hyperbolic mean anomaly in radians
+ * @param {number} e Eccentricity (must be > 1)
+ * @returns {number} Hyperbolic anomaly H
+ */
+function solveKeplerHyperbolic(M, e) {
+  let H = Math.sign(M) * Math.log(2 * Math.abs(M) / e + 1.8);
+  for (let i = 0; i < 50; i++) {
+    const dH = (M - e * Math.sinh(H) + H) / (e * Math.cosh(H) - 1);
+    H += dH;
+    if (Math.abs(dH) < 1e-10) {break;}
+  }
+  return H;
+}
+
+/**
  * Convert Keplerian elements to a heliocentric ecliptic J2000 cartesian position.
  *
  * @param {object} elements
@@ -44,22 +60,24 @@ export function keplerianToPosition(elements, t) {
   const { semiMajorAxis: a, eccentricity: e, inclination, longitudeOfAscendingNode, argumentOfPeriapsis, meanAnomalyAtEpoch, meanMotion, epoch } = elements;
 
   const epochMs = epoch ? new Date(epoch).getTime() : J2000_MS;
-  const daysSinceJ2000 = (t - epochMs) / 86400000;
+  const daysSinceEpoch = (t - epochMs) / 86400000;
 
-  // Mean anomaly at time t (radians)
-  const M = ((meanAnomalyAtEpoch + meanMotion * daysSinceJ2000) % 360) * DEG;
+  const rawM = meanAnomalyAtEpoch + meanMotion * daysSinceEpoch;
+  // Hyperbolic orbits: M grows unbounded, no wrapping. Elliptical: wrap to [0, 360).
+  const M = (e >= 1 ? rawM : rawM % 360) * DEG;
 
-  // Eccentric anomaly
-  const E = solveKepler(M, e);
-
-  // True anomaly
-  const nu = 2 * Math.atan2(
-    Math.sqrt(1 + e) * Math.sin(E / 2),
-    Math.sqrt(1 - e) * Math.cos(E / 2)
-  );
-
-  // Distance from focus
-  const r = a * (1 - e * Math.cos(E));
+  let r, nu;
+  if (e >= 1) {
+    // Hyperbolic orbit: solve M = e*sinh(H) - H
+    const H = solveKeplerHyperbolic(M, e);
+    nu = 2 * Math.atan2(Math.sqrt(e + 1) * Math.sinh(H / 2), Math.sqrt(e - 1) * Math.cosh(H / 2));
+    r = a * (1 - e * Math.cosh(H)); // a < 0 for hyperbolic, so r > 0
+  } else {
+    // Elliptical orbit: solve M = E - e*sin(E)
+    const E = solveKepler(M, e);
+    nu = 2 * Math.atan2(Math.sqrt(1 + e) * Math.sin(E / 2), Math.sqrt(1 - e) * Math.cos(E / 2));
+    r = a * (1 - e * Math.cos(E));
+  }
 
   // Position in orbital plane
   const xOrbital = r * Math.cos(nu);
