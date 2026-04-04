@@ -2,6 +2,7 @@ import { SceneRenderer } from '../renderer/SceneRenderer.js';
 import { OrbitRenderer } from '../renderer/OrbitRenderer.js';
 import { ObjectRenderer } from '../renderer/ObjectRenderer.js';
 import { CelestialBody } from '../../../models/CelestialBody.js';
+import { Satellite } from '../../../models/Satellite.js';
 import { fetchBodies } from '../../../services/api.js';
 
 /**
@@ -25,10 +26,13 @@ export class SolarSystemController {
     this._objectRenderer = new ObjectRenderer(this._sceneRenderer.scene);
     /** @type {Map<string, import('../../../models/SpaceObject.js').SpaceObject>} */
     this._bodies = new Map();
+    /** @type {Map<string, Satellite>} */
+    this._satellites = new Map();
     this._animFrameId = null;
     // Time override: null means use real-time (Date.now())
     this._timeOverride = null;
     this._focusedBodyId = null;
+    this._focusedSatelliteId = null;
 
     this._load();
   }
@@ -52,6 +56,7 @@ export class SolarSystemController {
       this._animFrameId = requestAnimationFrame(tick);
       const t = this._timeOverride ?? Date.now();
       this._objectRenderer.updatePositions(this._bodies, t);
+      this._objectRenderer.updateSatellitePoints(this._bodies, this._satellites, t);
       this._trackFocus(t);
       this._sceneRenderer.render();
       this._callbacks.onAfterRender?.();
@@ -60,13 +65,24 @@ export class SolarSystemController {
   }
 
   _trackFocus(t) {
-    if (!this._focusedBodyId) {
+    if (this._focusedSatelliteId) {
+      const sat = this._satellites.get(this._focusedSatelliteId);
+      if (!sat) return;
+      const earth = this._bodies.get(sat.centralBodyId);
+      if (!earth) return;
+      const satRel = sat.getPosition(t);
+      const earthPos = earth.getPosition(t);
+      // heliocentric ecliptic → three.js y-up: (x,y,z) → (x,z,y)
+      this._sceneRenderer.setFocusTarget(
+        earthPos.x + satRel.x,
+        earthPos.z + satRel.z,
+        earthPos.y + satRel.y,
+      );
       return;
     }
+    if (!this._focusedBodyId) return;
     const body = this._bodies.get(this._focusedBodyId);
-    if (!body) {
-      return;
-    }
+    if (!body) return;
     if (body.id === 'sun') {
       this._sceneRenderer.setFocusTarget(0, 0, 0);
       return;
@@ -81,7 +97,73 @@ export class SolarSystemController {
    * @param {string} id
    */
   focusBody(id) {
+    this._focusedSatelliteId = null;
     this._focusedBodyId = id;
+  }
+
+  /**
+   * Load a satellite group into the scene as a point cloud.
+   * @param {Array} rawArray Raw satellite data from the API
+   */
+  loadSatellites(rawArray) {
+    this._objectRenderer.clearSatellitePoints();
+    this._orbitRenderer.clearSatelliteOrbit();
+    this._satellites.clear();
+    this._focusedSatelliteId = null;
+    for (const data of rawArray) {
+      const sat = new Satellite(data);
+      this._satellites.set(sat.id, sat);
+    }
+    this._objectRenderer.setSatellitePoints(this._satellites);
+  }
+
+  /**
+   * Remove all satellite visuals from the scene.
+   */
+  clearSatellites() {
+    this._objectRenderer.clearSatellitePoints();
+    this._orbitRenderer.clearSatelliteOrbit();
+    this._satellites.clear();
+    this._focusedSatelliteId = null;
+  }
+
+  /**
+   * Focus the camera on a satellite and draw its orbit.
+   * @param {string} id NORAD catalog number
+   */
+  focusSatellite(id) {
+    const sat = this._satellites.get(id);
+    if (!sat) return;
+    const earth = this._bodies.get(sat.centralBodyId);
+    if (!earth) return;
+
+    this._orbitRenderer.clearSatelliteOrbit();
+
+    const t = this._timeOverride ?? Date.now();
+    const earthPos = earth.getPosition(t);
+    this._orbitRenderer.addSatelliteOrbit(sat, earthPos);
+
+    this._focusedBodyId = null;
+    this._focusedSatelliteId = id;
+    this._sceneRenderer.clearFocusTarget();
+    this._zoomToSatellite(earthPos, sat.elements.semiMajorAxis * 3);
+  }
+
+  _zoomToSatellite(earthEclipticPos, dist) {
+    // Convert Earth ecliptic position to three.js y-up coords
+    const ex = earthEclipticPos.x;
+    const ey = earthEclipticPos.z;
+    const ez = earthEclipticPos.y;
+
+    const cam = this._sceneRenderer.camera;
+    const target = this._sceneRenderer.controls.target;
+    const dir = cam.position.clone().sub(target);
+    if (dir.length() < 0.0001) dir.set(0, 1, 0);
+    else dir.normalize();
+
+    cam.position.set(ex + dir.x * dist, ey + dir.y * dist, ez + dir.z * dist);
+    this._sceneRenderer.controls.target.set(ex, ey, ez);
+    this._sceneRenderer.controls.update();
   }
 
   /**
@@ -89,13 +171,13 @@ export class SolarSystemController {
    * @param {number|null} t Unix timestamp in ms, or null for real-time
    */
   setTime(t) {
-    this._timeOverride = t
+    this._timeOverride = t;
   }
 
   dispose() {
-    if (this._animFrameId !== null) cancelAnimationFrame(this._animFrameId)
-    this._objectRenderer.dispose()
-    this._orbitRenderer.dispose()
-    this._sceneRenderer.dispose()
+    if (this._animFrameId !== null) cancelAnimationFrame(this._animFrameId);
+    this._objectRenderer.dispose();
+    this._orbitRenderer.dispose();
+    this._sceneRenderer.dispose();
   }
 }

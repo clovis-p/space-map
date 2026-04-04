@@ -1,7 +1,7 @@
 <template>
   <nav class="body-list">
     <div class="tabs">
-      <button class="tab-btn" :class="{ active: activeTab === 'planets' }" @click="activeTab = 'planets'">Planets</button>
+      <button class="tab-btn" :class="{ active: activeTab === 'planets' }" @click="onPlanetsTab">Planets</button>
       <button class="tab-btn" :class="{ active: activeTab === 'satellites' }" @click="onSatellitesTab">Satellites</button>
     </div>
 
@@ -28,6 +28,8 @@
         v-for="sat in satellites"
         :key="sat.id"
         class="body-item"
+        :class="{ active: focusedSatelliteId === sat.id }"
+        @click="onSatelliteClick(sat)"
       >
         <span class="dot" :style="{ background: colorToCss(selectedGroup?.color) }" />
         <span class="name">{{ sat.name }}</span>
@@ -38,6 +40,7 @@
 
 <script setup>
 import { ref, computed } from 'vue';
+import { fetchSatellites as apiFetchSatellites } from '../../services/api.js';
 
 const props = defineProps({
   bodies: { type: Array, default: () => [] },
@@ -45,12 +48,13 @@ const props = defineProps({
   groups: { type: Array, default: () => [] },
 });
 
-const emit = defineEmits(['focus']);
+const emit = defineEmits(['focus', 'satellites-loaded', 'focus-satellite', 'satellites-cleared']);
 
 const activeTab = ref('planets');
 const selectedGroupId = ref('stations');
 const satellites = ref([]);
 const loadingSatellites = ref(false);
+const focusedSatelliteId = ref(null);
 
 const selectedGroup = computed(() => props.groups.find(g => g.id === selectedGroupId.value));
 
@@ -60,15 +64,28 @@ function colorToCss(hex) {
 }
 
 async function fetchSatellites() {
+  emit('satellites-cleared');
+  focusedSatelliteId.value = null;
   loadingSatellites.value = true;
-  const res = await fetch(`/api/satellites?group=${selectedGroupId.value}`);
-  satellites.value = await res.json();
+  satellites.value = await apiFetchSatellites(selectedGroupId.value);
   loadingSatellites.value = false;
+  emit('satellites-loaded', satellites.value);
+}
+
+function onPlanetsTab() {
+  activeTab.value = 'planets';
+  focusedSatelliteId.value = null;
+  emit('satellites-cleared');
 }
 
 function onSatellitesTab() {
   activeTab.value = 'satellites';
   if (satellites.value.length === 0) fetchSatellites();
+}
+
+function onSatelliteClick(sat) {
+  focusedSatelliteId.value = sat.id;
+  emit('focus-satellite', sat.id);
 }
 </script>
 

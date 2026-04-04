@@ -17,7 +17,7 @@ export class SceneRenderer {
   }
 
   _initRenderer() {
-    this.renderer = new THREE.WebGLRenderer({ canvas: this.canvas, antialias: true });
+    this.renderer = new THREE.WebGLRenderer({ canvas: this.canvas, antialias: true, logarithmicDepthBuffer: true });
     this.renderer.setPixelRatio(window.devicePixelRatio);
     this.renderer.setSize(this.canvas.clientWidth, this.canvas.clientHeight);
   }
@@ -29,7 +29,7 @@ export class SceneRenderer {
   _initCamera() {
     const w = this.canvas.clientWidth;
     const h = this.canvas.clientHeight;
-    this.camera = new THREE.PerspectiveCamera(60, w / h, 0.001, 10000);
+    this.camera = new THREE.PerspectiveCamera(60, w / h, 0.0000001, 10000);
     // Position camera above the ecliptic plane looking down
     this.camera.position.set(0, 30, 0);
     this.camera.lookAt(0, 0, 0);
@@ -48,7 +48,7 @@ export class SceneRenderer {
     this.controls = new OrbitControls(this.camera, this.canvas);
     this.controls.enableDamping = true;
     this.controls.dampingFactor = 0.05;
-    this.controls.minDistance = 0.01;
+    this.controls.minDistance = 0.00001;
     this.controls.maxDistance = 500;
     // Focus tracking state
     this._focusTarget = null;     // current world position of focused body
