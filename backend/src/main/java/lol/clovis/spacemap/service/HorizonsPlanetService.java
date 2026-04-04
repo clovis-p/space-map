@@ -2,6 +2,7 @@ package lol.clovis.spacemap.service;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lol.clovis.spacemap.model.OrbitalElements;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -26,9 +27,9 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @Service
-public class HorizonsService {
+public class HorizonsPlanetService {
 
-    private static final Logger log = LoggerFactory.getLogger(HorizonsService.class);
+    private static final Logger log = LoggerFactory.getLogger(HorizonsPlanetService.class);
 
     // Ordered Mercury to Neptune; Sun is excluded (no heliocentric elements needed)
     private static final Map<String, String> PLANET_IDS = new LinkedHashMap<>(Map.of(
@@ -68,8 +69,8 @@ public class HorizonsService {
     private final ObjectMapper objectMapper;
     private final String horizonsUrl;
 
-    public HorizonsService(RestClient.Builder restClientBuilder, ObjectMapper objectMapper,
-                           @Value("${horizons.api.url}") String horizonsUrl) {
+    public HorizonsPlanetService(RestClient.Builder restClientBuilder, ObjectMapper objectMapper,
+                                 @Value("${horizons.api.url}") String horizonsUrl) {
         SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
         factory.setConnectTimeout(Duration.ofSeconds(10));
         factory.setReadTimeout(Duration.ofSeconds(30));
@@ -140,7 +141,7 @@ public class HorizonsService {
         return parseElements(response.result());
     }
 
-    // Package-private for unit testing
+    // Package-private for unit testing and reuse by HorizonsSpacecraftService
     static OrbitalElements parseElements(String result) {
         int soeIdx = result.indexOf("$$SOE");
         int eoeIdx = result.indexOf("$$EOE");
@@ -190,17 +191,6 @@ public class HorizonsService {
     }
 
     private record HorizonsResponse(@JsonProperty("result") String result) {}
-
-    public record OrbitalElements(
-            double semiMajorAxis,
-            double eccentricity,
-            double inclination,
-            double longitudeOfAscendingNode,
-            double argumentOfPeriapsis,
-            double meanAnomalyAtEpoch,
-            double meanMotion,
-            String epoch
-    ) {}
 
     public record Body(
             String id,

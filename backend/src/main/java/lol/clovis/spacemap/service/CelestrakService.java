@@ -4,6 +4,9 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lol.clovis.spacemap.model.GroupInfo;
+import lol.clovis.spacemap.model.OrbitalElements;
+import lol.clovis.spacemap.model.SpacecraftData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cache.annotation.Cacheable;
@@ -18,17 +21,15 @@ import java.util.List;
 import java.util.Map;
 
 @Service
-public class CelestrakService {
+public class CelestrakService implements SpacecraftSource {
 
     private static final Logger log = LoggerFactory.getLogger(CelestrakService.class);
 
     private static final String CELESTRAK_URL =
             "https://celestrak.org/NORAD/elements/gp.php?GROUP={group}&FORMAT=json";
 
-    public record GroupInfo(String name, int color) {}
-
     // Allowlist: protects against SSRF if the group param is ever used in a URL
-    public static final Map<String, GroupInfo> GROUPS = Map.ofEntries(
+    private static final Map<String, GroupInfo> OWN_GROUPS = Map.ofEntries(
             Map.entry("stations", new GroupInfo("Space Stations", 0x4fc3f7)),
             Map.entry("visual", new GroupInfo("Brightest / Visible", 0xffffff)),
             Map.entry("active", new GroupInfo("All Active", 0x80cbc4)),
@@ -59,13 +60,18 @@ public class CelestrakService {
         this.objectMapper = objectMapper;
     }
 
-    private static final double MU_EARTH = 398600.4418; // km³/s²
+    @Override
+    public Map<String, GroupInfo> groups() {
+        return OWN_GROUPS;
+    }
+
+    private static final double MU_EARTH = 398600.4418; // km^3/s^2
     private static final double AU_IN_KM = 149597870.7;
 
     private static SpacecraftData toSpacecraftData(OmmRecord r) {
         double n = r.meanMotion() * 2 * Math.PI / 86400; // rad/s
         double semiMajorAxisAu = Math.pow(MU_EARTH / (n * n), 1.0 / 3.0) / AU_IN_KM;
-        SpacecraftData.OrbitalElements elements = new SpacecraftData.OrbitalElements(
+        OrbitalElements elements = new OrbitalElements(
                 semiMajorAxisAu,
                 r.eccentricity(),
                 r.inclination(),
@@ -78,9 +84,10 @@ public class CelestrakService {
         return new SpacecraftData(String.valueOf(r.noradCatId()), r.objectName(), "earth", elements);
     }
 
+    @Override
     @Cacheable(value = "tle", key = "#group")
     public List<SpacecraftData> fetchGroup(String group) {
-        if (!GROUPS.containsKey(group)) {
+        if (!OWN_GROUPS.containsKey(group)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                     "Unknown group '%s'. See /api/groups for valid options.".formatted(group));
         }
@@ -110,24 +117,6 @@ public class CelestrakService {
             throw new ResponseStatusException(HttpStatus.BAD_GATEWAY,
                     "Failed to fetch data from CelesTrak: " + e.getMessage());
         }
-    }
-
-    public record SpacecraftData(
-            String id,
-            String name,
-            String centralBodyId,
-            OrbitalElements elements
-    ) {
-        public record OrbitalElements(
-                double semiMajorAxis,
-                double eccentricity,
-                double inclination,
-                double longitudeOfAscendingNode,
-                double argumentOfPeriapsis,
-                double meanAnomalyAtEpoch,
-                double meanMotion,
-                String epoch
-        ) {}
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)

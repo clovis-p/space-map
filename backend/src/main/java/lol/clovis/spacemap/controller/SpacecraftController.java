@@ -1,44 +1,49 @@
 package lol.clovis.spacemap.controller;
 
+import lol.clovis.spacemap.model.GroupInfo;
+import lol.clovis.spacemap.model.SpacecraftData;
+import lol.clovis.spacemap.service.SpacecraftSource;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import lol.clovis.spacemap.service.CelestrakService;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api")
 public class SpacecraftController {
 
-    private final CelestrakService celestrakService;
+    private final Map<String, SpacecraftSource> groupRegistry;
 
-    public SpacecraftController(CelestrakService celestrakService) {
-        this.celestrakService = celestrakService;
+    public SpacecraftController(List<SpacecraftSource> sources) {
+        this.groupRegistry = sources.stream()
+                .flatMap(s -> s.groups().keySet().stream().map(id -> Map.entry(id, s)))
+                .collect(Collectors.toUnmodifiableMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 
-    /**
-     * Returns raw OMM JSON from CelesTrak for the requested group.
-     * Results are cached for 30 minutes.
-     *
-     * Example: GET /api/spacecraft?group=stations
-     */
     @GetMapping("/spacecraft")
-    public List<CelestrakService.SpacecraftData> getSpacecraft(@RequestParam(defaultValue = "stations") String group) {
-        return celestrakService.fetchGroup(group);
+    public List<SpacecraftData> getSpacecraft(@RequestParam(defaultValue = "stations") String group) {
+        SpacecraftSource source = groupRegistry.get(group);
+        if (source == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Unknown group '%s'. See /api/groups for valid options.".formatted(group));
+        }
+        return source.fetchGroup(group);
     }
 
-    /**
-     * Returns the list of supported spacecraft groups with their display names.
-     *
-     * Example: GET /api/groups
-     */
     @GetMapping("/groups")
     public List<GroupDto> getGroups() {
-        return CelestrakService.GROUPS.entrySet().stream()
-                .map(e -> new GroupDto(e.getKey(), e.getValue().name(), e.getValue().color()))
+        return groupRegistry.entrySet().stream()
+                .map(e -> {
+                    GroupInfo info = e.getValue().groups().get(e.getKey());
+                    return new GroupDto(e.getKey(), info.name(), info.color());
+                })
                 .sorted(Comparator.comparing(GroupDto::name))
                 .toList();
     }
