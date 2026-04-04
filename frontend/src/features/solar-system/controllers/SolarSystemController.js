@@ -57,11 +57,21 @@ export class SolarSystemController {
       const t = this._timeOverride ?? Date.now();
       this._objectRenderer.updatePositions(this._bodies, t);
       this._objectRenderer.updateSpacecraftPoints(this._bodies, this._spacecraft, t);
+      this._updateSpacecraftOrbit(t);
       this._trackFocus(t);
       this._sceneRenderer.render();
       this._callbacks.onAfterRender?.();
     };
     tick();
+  }
+
+  _updateSpacecraftOrbit(t) {
+    if (!this._focusedSpacecraftId) return;
+    const sat = this._spacecraft.get(this._focusedSpacecraftId);
+    if (!sat) return;
+    const earth = this._bodies.get(sat.centralBodyId);
+    if (!earth) return;
+    this._orbitRenderer.updateSpacecraftOrbitPosition(earth.getPosition(t));
   }
 
   _trackFocus(t) {

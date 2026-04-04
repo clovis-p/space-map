@@ -42,11 +42,26 @@ export class OrbitRenderer {
       tRef: Date.now(),
       color: 0xffffff,
       opacity: 0.6,
-      offset: centralBodyEclipticPos,
     });
     line.frustumCulled = false;
     this.scene.add(line);
     this._spacecraftOrbitLine = line;
+    this.updateSpacecraftOrbitPosition(centralBodyEclipticPos);
+  }
+
+  /**
+   * Move the spacecraft orbit ellipse to match the central body's current position.
+   * Call every frame while a spacecraft orbit is displayed.
+   * @param {{ x: number, y: number, z: number }} centralBodyEclipticPos
+   */
+  updateSpacecraftOrbitPosition(centralBodyEclipticPos) {
+    if (!this._spacecraftOrbitLine) return;
+    // y-up: ecliptic (x,y,z) maps to three.js (x,z,y)
+    this._spacecraftOrbitLine.position.set(
+      centralBodyEclipticPos.x,
+      centralBodyEclipticPos.z,
+      centralBodyEclipticPos.y,
+    );
   }
 
   /**
