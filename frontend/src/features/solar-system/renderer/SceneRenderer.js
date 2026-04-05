@@ -19,7 +19,7 @@ export class SceneRenderer {
   _initRenderer() {
     this.renderer = new THREE.WebGLRenderer({ canvas: this.canvas, antialias: true, logarithmicDepthBuffer: true });
     this.renderer.setPixelRatio(window.devicePixelRatio);
-    this.renderer.setSize(this.canvas.clientWidth, this.canvas.clientHeight);
+    this.renderer.setSize(this.canvas.clientWidth, this.canvas.clientHeight, false);
   }
 
   _initScene() {
@@ -101,7 +101,7 @@ export class SceneRenderer {
     const h = this.canvas.clientHeight;
     this.camera.aspect = w / h;
     this.camera.updateProjectionMatrix();
-    this.renderer.setSize(w, h);
+    this.renderer.setSize(w, h, false);
   }
 
   render() {

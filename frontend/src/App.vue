@@ -4,8 +4,10 @@
       ref="solarSystemView"
       @bodies-loaded="bodies = $event"
     />
-    <div class="hud-bottom">
-      <TimeControls />
+    <div class="hud-top-container">
+      <div class="hud-top">
+        <TimeControls />
+      </div>
     </div>
     <div class="hud-side">
       <BodyList
@@ -62,11 +64,16 @@ function onSpacecraftCleared() {
   height: 100%;
 }
 
-.hud-bottom {
+.hud-top-container {
+  display: flex;
   position: absolute;
-  bottom: 16px;
-  left: 50%;
-  transform: translateX(-50%);
+  width: 100svw;
+  top: 16px;
+}
+
+.hud-top {
+  margin: auto;
+  display: flex;
 }
 
 .hud-side {
@@ -81,8 +88,8 @@ function onSpacecraftCleared() {
     top: auto;
     left: 0;
     right: 0;
-    bottom: 52px;
-    padding: 0 12px;
+    bottom: 0;
+    padding: 12px;
   }
 }
 </style>
