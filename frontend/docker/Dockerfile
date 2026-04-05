@@ -1,4 +1,4 @@
-FROM node:20-alpine
+FROM node:20-alpine AS build
 
 RUN npm install -g pnpm
 
@@ -9,6 +9,11 @@ RUN pnpm install --frozen-lockfile
 
 COPY . .
 
-EXPOSE 5173
+RUN pnpm build
 
-CMD ["pnpm", "dev", "--host"]
+FROM nginx:alpine
+
+COPY --from=build /app/dist /usr/share/nginx/html
+COPY docker/nginx.conf /etc/nginx/conf.d/default.conf
+
+EXPOSE 80
